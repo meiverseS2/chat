@@ -41,6 +41,7 @@ body.view .panel{display:none}
 .hd{display:flex;align-items:center;gap:14px;padding:12px 20px}
 .bk{font-size:30px;font-weight:400;line-height:1}.mn{margin-left:auto;color:#aaa}
 .inp svg{flex:none}.inp div{color:#ccc}
+.b.m{margin-bottom:0;border:0}
 .exp .b,.exp .dots i{animation:none!important}
 .exp .phone{border-radius:0;box-shadow:none;position:static}
 .exp .log{overflow:hidden;justify-content:flex-end}
@@ -122,19 +123,26 @@ try{btn.textContent="준비중...";
 if(!window.html2canvas)await new Promise((ok,no)=>{const e=document.createElement("script");e.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";e.onload=ok;e.onerror=no;document.head.appendChild(e)});
 const {GIFEncoder,quantize,applyPalette}=await import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js");
 document.body.classList.add("exp");$("log").innerHTML="";
-const g=GIFEncoder(),sc=+$("gsc").value,sp=C.speed||1;let pend=null,last=null,n=0;
-const flush=()=>{if(pend)g.writeFrame(pend.i,pend.w,pend.h,{palette:pend.p,delay:Math.max(20,Math.round(pend.d))})};
+const g=GIFEncoder(),sc=+$("gsc").value,sp=C.speed||1,cache=new Map();let pend=null,last=null,n=0,gp=null;
+const shot=async()=>{const cv=await html2canvas($("phone"),{scale:sc,backgroundColor:C.bg,logging:false});return{w:cv.width,h:cv.height,px:cv.getContext("2d").getImageData(0,0,cv.width,cv.height).data}};
+C.msgs.forEach(bub);btn.textContent="색상 분석중...";
+{const s0=await shot();gp=quantize(s0.px,256)}
+$("log").innerHTML="";
+const flush=()=>{if(pend)g.writeFrame(pend.i,pend.w,pend.h,{palette:gp,delay:Math.max(20,Math.round(pend.d))})};
 async function fr(key,d){d/=sp;if(key===last){pend.d+=d;return}flush();last=key;
-const cv=await html2canvas($("phone"),{scale:sc,backgroundColor:C.bg,logging:false});
-const w=cv.width,h=cv.height,px=cv.getContext("2d").getImageData(0,0,w,h).data,p=quantize(px,256);
-pend={i:applyPalette(px,p),p,w,h,d};btn.textContent="생성중 "+(++n)+"장..."}
+let c=cache.get(key);if(!c){const s1=await shot();c={i:applyPalette(s1.px,gp),w:s1.w,h:s1.h};cache.set(key,c);btn.textContent="생성중 "+(++n)+"장..."}
+pend={...c,d}}
 for(let i=0;i<C.msgs.length;i++){const m=C.msgs[i];
 await fr("b"+i,m.gap);
 for(let k=0;k<m.n;k++){const d=dots(m.s);let t=0,ph=0;
-while(t<m.ms){d.querySelectorAll("i").forEach((e,j)=>{e.style.opacity=j==ph?1:.35;e.style.transform=j==ph?"translateY(-3px)":"none"});
-await fr("d"+i+"-"+k+"-"+ph,Math.min(250,m.ms-t));t+=250;ph=(ph+1)%3}
-d.remove();if(k<m.n-1)await fr("e"+i+"-"+k,500)}
-bub(m,i)}
+while(t<m.ms){const dt=Math.min(100,m.ms-t);
+d.querySelectorAll("i").forEach((e,j)=>{const w=Math.max(0,Math.sin(2*Math.PI*(((ph/8-j*.12)%1+1)%1)));e.style.opacity=.3+.7*w;e.style.transform="translateY("+(-3*w)+"px)"});
+await fr("d"+i+"-"+ph,dt);t+=100;ph=(ph+1)%8}
+d.remove();if(k<m.n-1)await fr("b"+i,500)}
+bub(m,i);const bs=$("log").querySelectorAll(".b"),bb=bs[bs.length-1];
+bb.style.opacity=.35;bb.style.transform="translateY(8px)";await fr("i1-"+i,50);
+bb.style.opacity=.75;bb.style.transform="translateY(3px)";await fr("i2-"+i,50);
+bb.style.opacity="";bb.style.transform=""}
 await fr("end",2500);flush();g.finish();
 const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([g.bytes()],{type:"image/gif"}));a.download="chat.gif";a.click()
 }catch(e){alert("GIF 생성 실패: "+e.message)}
