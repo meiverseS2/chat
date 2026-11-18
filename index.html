@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>채팅 메이커</title>
+<style>
+:root{--bg:#fff;--me:#cba3a3;--meT:#fff;--them:#f3f4f8;--themT:#222;--font:16px}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:#e9e9ee;color:#222}
+.wrap{display:flex;flex-wrap:wrap;gap:16px;padding:16px;justify-content:center;align-items:flex-start}
+.panel{width:420px;max-width:100%;background:#fff;border-radius:14px;padding:14px}
+.panel h3{margin:14px 0 6px;font-size:15px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0;font-size:13px}
+button{border:0;border-radius:8px;padding:7px 12px;background:#cba3a3;color:#fff;cursor:pointer;font-size:13px}
+button.g{background:#ddd;color:#333}
+input,select,textarea{font:inherit;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:4px}
+input[type=number]{width:62px}input[type=color]{padding:0;width:34px;height:26px}
+.m{border:1px solid #eee;border-radius:10px;padding:8px;margin:8px 0;background:#fafafa}
+.m textarea{width:100%;height:46px;resize:vertical}
+.m label{font-size:11px;color:#777}
+.phone{width:380px;max-width:100%;height:640px;background:var(--bg);border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 4px 20px #0002;position:sticky;top:16px}
+.hd{padding:16px 20px;font-weight:700;font-size:18px;border-bottom:1px solid #eee}
+.log{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column}
+.nm{font-size:12px;font-weight:700;color:#777;margin:8px 0 3px 6px}
+.b{max-width:78%;padding:11px 16px;border-radius:22px;font-size:var(--font);line-height:1.45;white-space:pre-wrap;word-break:break-word;animation:in .2s}
+.b.t{background:var(--them);color:var(--themT);align-self:flex-start;border-bottom-left-radius:6px}
+.b.m{background:var(--me);color:var(--meT);align-self:flex-end;border-bottom-right-radius:6px;margin-top:0}
+.ts{font-size:10px;color:#aaa;margin:2px 6px}
+.ts.r{align-self:flex-end}
+.dots{display:flex;gap:4px;padding:15px 16px}
+.dots i{width:7px;height:7px;border-radius:50%;background:#999;animation:bl 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.inp{border-top:1px solid #eee;padding:12px 16px;display:flex;gap:10px;align-items:center}
+.inp div{flex:1;border:1px solid #eee;border-radius:20px;padding:10px 16px;color:#bbb;font-size:14px;background:#fcfcfd}
+body.view .panel{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="panel" id="panel">
+  <div class="row"><button onclick="play()">▶ 재생/다시</button><button class="g" onclick="stopP()">■ 정지</button><button class="g" onclick="showAll()">⏩ 즉시 전체보기</button></div>
+  <h3>🎨 설정</h3>
+  <div class="row">상대 이름 <input id="name" size="8"> 내 이름 표시 <input type="checkbox" id="showMe"></div>
+  <div class="row">배경 <input type="color" id="bg"> 내 말풍선 <input type="color" id="me"> 글자 <input type="color" id="meT"></div>
+  <div class="row">상대 말풍선 <input type="color" id="them"> 글자 <input type="color" id="themT"> 글자크기 <input type="number" id="font" min="10" max="30"></div>
+  <div class="row">재생 속도 ×<input type="number" id="speed" step="0.1" min="0.1"> 이름 표시 <input type="checkbox" id="showName"> 시간 표시 <input type="checkbox" id="showTime"> 입력창 문구 <input id="ph" size="14"></div>
+  <div class="row">자동 반복 <input type="checkbox" id="loop"> 탭해서 다음 메시지 <input type="checkbox" id="tap"></div>
+  <h3>💬 메시지 <button class="g" onclick="add('t')">+상대</button> <button class="g" onclick="add('m')">+나</button></h3>
+  <div style="font-size:11px;color:#888">간격=이전 메시지 후 대기(ms) · 입력중 횟수=점점점이 떴다 사라지는 횟수 · 지속=1회당 표시(ms)</div>
+  <div id="list"></div>
+  <h3>📦 저장/공유</h3>
+  <div class="row"><button onclick="copyLink()">보기 전용 링크 복사</button><button class="g" onclick="exp()">JSON 내보내기</button><button class="g" onclick="document.getElementById('f').click()">불러오기</button><input type="file" id="f" hidden accept=".json"></div>
+  <div style="font-size:11px;color:#888">링크에 모든 설정이 담겨요. 설정은 이 브라우저에도 자동 저장됩니다.</div>
+ </div>
+ <div class="phone" id="phone" onclick="tapNext()">
+  <div class="hd" id="hd"></div>
+  <div class="log" id="log"></div>
+  <div class="inp"><span>🙂</span><div id="phd"></div><span>➤</span></div>
+ </div>
+</div>
+<script>
+const D={name:"J3",showMe:false,bg:"#ffffff",me:"#cba3a3",meT:"#ffffff",them:"#f3f4f8",themT:"#222222",font:16,speed:1,showName:true,showTime:false,ph:"type your message",loop:false,tap:false,
+msgs:[
+{s:"t",x:"얼굴 본 지 좀 되지 않았나...",gap:500,n:1,ms:1500},
+{s:"m",x:"... 이따가 일 끝나고 저녁에 한 번 가든지 할게요.",gap:1200,n:1,ms:1200},
+{s:"t",x:"올 때 도넛...",gap:800,n:2,ms:1200},
+{s:"t",x:"크리스피로...",gap:400,n:1,ms:1000},
+{s:"m",x:"내가 심부름꾼이라도 되는 줄 알죠? 아주 그냥 실컷 부려먹네.",gap:1000,n:1,ms:1800},
+{s:"t",x:"꼭 그런 건 아닌데......",gap:900,n:3,ms:1000}]};
+let C=JSON.parse(JSON.stringify(D)),tok=0,pend=null;
+const $=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms/(C.speed||1)));
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))),dec=s=>JSON.parse(decodeURIComponent(escape(atob(s))));
+function save(){try{localStorage.setItem("chat",JSON.stringify(C))}catch(e){}}
+function theme(){const r=document.documentElement.style;["bg","me","meT","them","themT"].forEach(k=>r.setProperty("--"+k,C[k]));r.setProperty("--font",C.font+"px");$("hd").textContent=C.name;$("phd").textContent=C.ph}
+const sets=["name","bg","me","meT","them","themT","font","speed","ph"],chks=["showMe","showName","showTime","loop","tap"];
+function bind(){sets.forEach(k=>{$(k).value=C[k];$(k).oninput=e=>{C[k]=e.target.type=="number"?+e.target.value:e.target.value;theme();save()}});
+chks.forEach(k=>{$(k).checked=C[k];$(k).onchange=e=>{C[k]=e.target.checked;save()}})}
+function list(){$("list").innerHTML=C.msgs.map((m,i)=>`<div class="m"><div class="row"><select data-i="${i}" data-k="s"><option value="t"${m.s=="t"?" selected":""}>상대</option><option value="m"${m.s=="m"?" selected":""}>나</option></select>
+<button class="g" onclick="mv(${i},-1)">↑</button><button class="g" onclick="mv(${i},1)">↓</button><button class="g" onclick="del(${i})">삭제</button></div>
+<textarea data-i="${i}" data-k="x">${m.x.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</textarea>
+<div class="row"><label>간격</label><input type="number" data-i="${i}" data-k="gap" value="${m.gap}"><label>입력중 횟수</label><input type="number" data-i="${i}" data-k="n" value="${m.n}"><label>지속</label><input type="number" data-i="${i}" data-k="ms" value="${m.ms}"></div></div>`).join("");
+document.querySelectorAll("#list [data-k]").forEach(e=>e.oninput=()=>{const m=C.msgs[e.dataset.i],k=e.dataset.k;m[k]=["gap","n","ms"].includes(k)?+e.value:e.value;save()})}
+function add(s){C.msgs.push({s,x:"",gap:800,n:1,ms:1200});list();save()}
+function del(i){C.msgs.splice(i,1);list();save()}
+function mv(i,d){const j=i+d;if(j<0||j>=C.msgs.length)return;[C.msgs[i],C.msgs[j]]=[C.msgs[j],C.msgs[i]];list();save()}
+function bub(m,i){const L=$("log"),p=C.msgs[i-1],first=!p||p.s!=m.s;
+if(first&&((m.s=="t"&&C.showName)||(m.s=="m"&&C.showMe))){const n=document.createElement("div");n.className="nm";n.textContent=m.s=="t"?C.name:"나";if(m.s=="m")n.style.alignSelf="flex-end";L.appendChild(n)}
+const b=document.createElement("div");b.className="b "+m.s;b.textContent=m.x;b.style.marginTop=first?"6px":"4px";L.appendChild(b);
+if(C.showTime){const t=document.createElement("div");t.className="ts"+(m.s=="m"?" r":"");t.textContent=new Date().toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"});L.appendChild(t)}
+L.scrollTop=L.scrollHeight}
+function dots(s){const d=document.createElement("div");d.className="b "+s+" dots";d.innerHTML="<i></i><i></i><i></i>";d.style.padding="15px 16px";$("log").appendChild(d);$("log").scrollTop=1e9;return d}
+async function play(){const my=++tok;$("log").innerHTML="";
+for(let i=0;i<C.msgs.length;i++){const m=C.msgs[i];await sleep(m.gap);if(my!=tok)return;
+if(C.tap&&i>0){await new Promise(r=>pend=r);pend=null;if(my!=tok)return}
+for(let k=0;k<m.n;k++){const d=dots(m.s);await sleep(m.ms);d.remove();if(my!=tok)return;if(k<m.n-1){await sleep(500);if(my!=tok)return}}
+bub(m,i)}
+if(C.loop){await sleep(3000);if(my==tok)play()}}
+function tapNext(){if(pend)pend()}
+function stopP(){tok++;if(pend)pend()}
+function showAll(){tok++;$("log").innerHTML="";C.msgs.forEach(bub)}
+function copyLink(){const u=location.href.split("#")[0]+"#v="+enc(C);navigator.clipboard.writeText(u).then(()=>alert("링크가 복사됐어요!"))}
+function exp(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(C,null,1)]));a.download="chat.json";a.click()}
+$("f").onchange=e=>{const r=new FileReader();r.onload=()=>{C={...D,...JSON.parse(r.result)};init()};r.readAsText(e.target.files[0])};
+function init(){theme();bind();list();save()}
+try{const h=location.hash;if(h.startsWith("#v=")){C={...D,...dec(h.slice(3))};document.body.classList.add("view")}
+else{const s=localStorage.getItem("chat");if(s)C={...D,...JSON.parse(s)}}}catch(e){}
+init();play();
+</script>
+</body>
+</html>
