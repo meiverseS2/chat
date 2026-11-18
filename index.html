@@ -19,7 +19,7 @@ input[type=number]{width:62px}input[type=color]{padding:0;width:34px;height:26px
 .m{border:1px solid #eee;border-radius:10px;padding:8px;margin:8px 0;background:#fafafa}
 .m textarea{width:100%;height:46px;resize:vertical}
 .m label{font-size:11px;color:#777}
-.phone{width:380px;max-width:100%;height:640px;background:var(--bg);border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 4px 20px #0002;position:sticky;top:16px}
+.phone{width:380px;max-width:100%;height:auto;aspect-ratio:var(--ar);background:var(--bg);border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 4px 20px #0002;position:sticky;top:16px}
 .hd{padding:16px 20px;font-weight:700;font-size:18px;border-bottom:1px solid #eee}
 .log{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column}
 .nm{font-size:12px;font-weight:700;color:#777;margin:8px 0 3px 6px}
@@ -36,12 +36,21 @@ input[type=number]{width:62px}input[type=color]{padding:0;width:34px;height:26px
 .inp{border-top:1px solid #eee;padding:12px 16px;display:flex;gap:10px;align-items:center}
 .inp div{flex:1;border:1px solid #eee;border-radius:20px;padding:10px 16px;color:#bbb;font-size:14px;background:#fcfcfd}
 body.view .panel{display:none}
+.b{padding:.95em 1.15em}.b.t,.b.m{border-radius:1.25em}
+.dots{padding:1.1em 1.2em}
+.hd{display:flex;align-items:center;gap:14px;padding:18px 22px}
+.bk{font-size:30px;font-weight:400;line-height:1}.mn{margin-left:auto;color:#aaa}
+.inp svg{flex:none}.inp div{color:#ccc}
+.exp .b,.exp .dots i{animation:none!important}
+.exp .phone{border-radius:0;box-shadow:none;position:static}
+.exp .log{overflow:hidden;justify-content:flex-end}
 </style>
 </head>
 <body>
 <div class="wrap">
  <div class="panel" id="panel">
   <div class="row"><button onclick="play()">▶ 재생/다시</button><button class="g" onclick="stopP()">■ 정지</button><button class="g" onclick="showAll()">⏩ 즉시 전체보기</button></div>
+  <div class="row"><button id="gbtn" onclick="expGif()">🎞 GIF 저장</button> 해상도 <select id="gsc"><option value="1">1x</option><option value="1.5" selected>1.5x</option><option value="2">2x</option></select> 화면 비율 <select id="ratio"><option value="822/1320">사진 비율</option><option value="9/19.5">9:19.5 (최신 폰)</option><option value="9/16">9:16</option><option value="4/5">4:5</option><option value="1/1">1:1</option></select></div>
   <h3>🎨 설정</h3>
   <div class="row">상대 이름 <input id="name" size="8"> 내 이름 표시 <input type="checkbox" id="showMe"></div>
   <div class="row">배경 <input type="color" id="bg"> 내 말풍선 <input type="color" id="me"> 글자 <input type="color" id="meT"></div>
@@ -56,13 +65,13 @@ body.view .panel{display:none}
   <div style="font-size:11px;color:#888">링크에 모든 설정이 담겨요. 설정은 이 브라우저에도 자동 저장됩니다.</div>
  </div>
  <div class="phone" id="phone" onclick="tapNext()">
-  <div class="hd" id="hd"></div>
+  <div class="hd"><span class="bk">‹</span><span id="hd"></span><span class="mn">⋮</span></div>
   <div class="log" id="log"></div>
-  <div class="inp"><span>🙂</span><div id="phd"></div><span>➤</span></div>
+  <div class="inp"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a3a7b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.3 2 1.8 3.5 1.8s2.5-.5 3.5-1.8"/><circle cx="9" cy="10" r=".6" fill="#a3a7b8"/><circle cx="15" cy="10" r=".6" fill="#a3a7b8"/></svg><div id="phd"></div><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a3a7b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 3 10.5l7 3 3 7z"/></svg></div>
  </div>
 </div>
 <script>
-const D={name:"J3",showMe:false,bg:"#ffffff",me:"#cba3a3",meT:"#ffffff",them:"#f3f4f8",themT:"#222222",font:16,speed:1,showName:true,showTime:false,ph:"type your message",loop:false,tap:false,
+const D={name:"J3",showMe:false,bg:"#ffffff",me:"#cba3a3",meT:"#ffffff",them:"#f3f4f8",themT:"#222222",font:17,speed:1,showName:true,showTime:false,ph:"type your message",ratio:"822/1320",loop:false,tap:false,
 msgs:[
 {s:"t",x:"얼굴 본 지 좀 되지 않았나...",gap:500,n:1,ms:1500},
 {s:"m",x:"... 이따가 일 끝나고 저녁에 한 번 가든지 할게요.",gap:1200,n:1,ms:1200},
@@ -74,8 +83,8 @@ let C=JSON.parse(JSON.stringify(D)),tok=0,pend=null;
 const $=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms/(C.speed||1)));
 const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))),dec=s=>JSON.parse(decodeURIComponent(escape(atob(s))));
 function save(){try{localStorage.setItem("chat",JSON.stringify(C))}catch(e){}}
-function theme(){const r=document.documentElement.style;["bg","me","meT","them","themT"].forEach(k=>r.setProperty("--"+k,C[k]));r.setProperty("--font",C.font+"px");$("hd").textContent=C.name;$("phd").textContent=C.ph}
-const sets=["name","bg","me","meT","them","themT","font","speed","ph"],chks=["showMe","showName","showTime","loop","tap"];
+function theme(){const r=document.documentElement.style;["bg","me","meT","them","themT"].forEach(k=>r.setProperty("--"+k,C[k]));r.setProperty("--font",C.font+"px");r.setProperty("--ar",C.ratio);$("hd").textContent=C.name;$("phd").textContent=C.ph}
+const sets=["name","bg","me","meT","them","themT","font","speed","ph","ratio"],chks=["showMe","showName","showTime","loop","tap"];
 function bind(){sets.forEach(k=>{$(k).value=C[k];$(k).oninput=e=>{C[k]=e.target.type=="number"?+e.target.value:e.target.value;theme();save()}});
 chks.forEach(k=>{$(k).checked=C[k];$(k).onchange=e=>{C[k]=e.target.checked;save()}})}
 function list(){$("list").innerHTML=C.msgs.map((m,i)=>`<div class="m"><div class="row"><select data-i="${i}" data-k="s"><option value="t"${m.s=="t"?" selected":""}>상대</option><option value="m"${m.s=="m"?" selected":""}>나</option></select>
@@ -91,7 +100,7 @@ if(first&&((m.s=="t"&&C.showName)||(m.s=="m"&&C.showMe))){const n=document.creat
 const b=document.createElement("div");b.className="b "+m.s;b.textContent=m.x;b.style.marginTop=first?"6px":"4px";L.appendChild(b);
 if(C.showTime){const t=document.createElement("div");t.className="ts"+(m.s=="m"?" r":"");t.textContent=new Date().toLocaleTimeString("ko-KR",{hour:"numeric",minute:"2-digit"});L.appendChild(t)}
 L.scrollTop=L.scrollHeight}
-function dots(s){const d=document.createElement("div");d.className="b "+s+" dots";d.innerHTML="<i></i><i></i><i></i>";d.style.padding="15px 16px";$("log").appendChild(d);$("log").scrollTop=1e9;return d}
+function dots(s){const d=document.createElement("div");d.className="b "+s+" dots";d.innerHTML="<i></i><i></i><i></i>";$("log").appendChild(d);$("log").scrollTop=1e9;return d}
 async function play(){const my=++tok;$("log").innerHTML="";
 for(let i=0;i<C.msgs.length;i++){const m=C.msgs[i];await sleep(m.gap);if(my!=tok)return;
 if(C.tap&&i>0){await new Promise(r=>pend=r);pend=null;if(my!=tok)return}
@@ -107,6 +116,29 @@ $("f").onchange=e=>{const r=new FileReader();r.onload=()=>{C={...D,...JSON.parse
 function init(){theme();bind();list();save()}
 try{const h=location.hash;if(h.startsWith("#v=")){C={...D,...dec(h.slice(3))};document.body.classList.add("view")}
 else{const s=localStorage.getItem("chat");if(s)C={...D,...JSON.parse(s)}}}catch(e){}
+async function expGif(){
+const btn=$("gbtn");btn.disabled=true;stopP();const my=++tok;
+try{btn.textContent="준비중...";
+if(!window.html2canvas)await new Promise((ok,no)=>{const e=document.createElement("script");e.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+const {GIFEncoder,quantize,applyPalette}=await import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js");
+document.body.classList.add("exp");$("log").innerHTML="";
+const g=GIFEncoder(),sc=+$("gsc").value,sp=C.speed||1;let pend=null,last=null,n=0;
+const flush=()=>{if(pend)g.writeFrame(pend.i,pend.w,pend.h,{palette:pend.p,delay:Math.max(20,Math.round(pend.d))})};
+async function fr(key,d){d/=sp;if(key===last){pend.d+=d;return}flush();last=key;
+const cv=await html2canvas($("phone"),{scale:sc,backgroundColor:C.bg,logging:false});
+const w=cv.width,h=cv.height,px=cv.getContext("2d").getImageData(0,0,w,h).data,p=quantize(px,256);
+pend={i:applyPalette(px,p),p,w,h,d};btn.textContent="생성중 "+(++n)+"장..."}
+for(let i=0;i<C.msgs.length;i++){const m=C.msgs[i];
+await fr("b"+i,m.gap);
+for(let k=0;k<m.n;k++){const d=dots(m.s);let t=0,ph=0;
+while(t<m.ms){d.querySelectorAll("i").forEach((e,j)=>{e.style.opacity=j==ph?1:.35;e.style.transform=j==ph?"translateY(-3px)":"none"});
+await fr("d"+i+"-"+k+"-"+ph,Math.min(250,m.ms-t));t+=250;ph=(ph+1)%3}
+d.remove();if(k<m.n-1)await fr("e"+i+"-"+k,500)}
+bub(m,i)}
+await fr("end",2500);flush();g.finish();
+const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([g.bytes()],{type:"image/gif"}));a.download="chat.gif";a.click()
+}catch(e){alert("GIF 생성 실패: "+e.message)}
+document.body.classList.remove("exp");btn.disabled=false;btn.textContent="🎞 GIF 저장";showAll()}
 init();play();
 </script>
 </body>
