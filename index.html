@@ -72,14 +72,11 @@ body.view .panel{display:none}
  </div>
 </div>
 <script>
-const D={name:"J3",showMe:false,bg:"#ffffff",me:"#cba3a3",meT:"#ffffff",them:"#f3f4f8",themT:"#222222",font:17,speed:1,showName:true,showTime:false,ph:"type your message",ratio:"822/1320",loop:false,tap:false,
+const D={name:"이름",showMe:false,bg:"#ffffff",me:"#cba3a3",meT:"#ffffff",them:"#f3f4f8",themT:"#222222",font:17,speed:1,showName:true,showTime:false,ph:"type your message",ratio:"822/1320",loop:false,tap:false,
 msgs:[
-{s:"t",x:"얼굴 본 지 좀 되지 않았나...",gap:500,n:1,ms:1500},
-{s:"m",x:"... 이따가 일 끝나고 저녁에 한 번 가든지 할게요.",gap:1200,n:1,ms:1200},
-{s:"t",x:"올 때 도넛...",gap:800,n:2,ms:1200},
-{s:"t",x:"크리스피로...",gap:400,n:1,ms:1000},
-{s:"m",x:"내가 심부름꾼이라도 되는 줄 알죠? 아주 그냥 실컷 부려먹네.",gap:1000,n:1,ms:1800},
-{s:"t",x:"꼭 그런 건 아닌데......",gap:900,n:3,ms:1000}]};
+{s:"t",x:"상대 메세지를 입력하세요.",gap:500,n:1,ms:1500},
+{s:"m",x:"본인 메세지를 입력하세요.",gap:1200,n:1,ms:1200},
+{s:"t",x:"입력중 횟수는 조절할 수 있어요.",gap:800,n:2,ms:1200},]};
 let C=JSON.parse(JSON.stringify(D)),tok=0,pend=null;
 const $=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms/(C.speed||1)));
 const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))),dec=s=>JSON.parse(decodeURIComponent(escape(atob(s))));
