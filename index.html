@@ -45,13 +45,16 @@ body.view .panel{display:none}
 .exp .b,.exp .dots i{animation:none!important}
 .exp .phone{border-radius:0;box-shadow:none;position:static}
 .exp .log{overflow:hidden;justify-content:flex-end}
+.png .b,.png .dots i{animation:none!important}
+.png .phone{aspect-ratio:auto;height:auto;position:static;box-shadow:none}
+.png .log{overflow:visible;flex:none}
 </style>
 </head>
 <body>
 <div class="wrap">
  <div class="panel" id="panel">
   <div class="row"><button onclick="play()">▶ 재생/다시</button><button class="g" onclick="stopP()">■ 정지</button><button class="g" onclick="showAll()">⏩ 즉시 전체보기</button></div>
-  <div class="row"><button id="gbtn" onclick="expGif()">🎞 GIF 저장</button> 해상도 <select id="gsc"><option value="1">1x</option><option value="1.5" selected>1.5x</option><option value="2">2x</option></select> 화면 비율 <select id="ratio"><option value="822/1320">사진 비율</option><option value="9/19.5">9:19.5 (최신 폰)</option><option value="9/16">9:16</option><option value="4/5">4:5</option><option value="1/1">1:1</option></select></div>
+  <div class="row"><button id="gbtn" onclick="expGif()">🎞 GIF 저장</button><button id="pbtn" onclick="expPng()">🖼 PNG 저장</button> 해상도 <select id="gsc"><option value="1">1x</option><option value="1.5" selected>1.5x</option><option value="2">2x</option></select> 화면 비율 <select id="ratio"><option value="822/1320">사진 비율</option><option value="9/19.5">9:19.5 (최신 폰)</option><option value="9/16">9:16</option><option value="4/5">4:5</option><option value="1/1">1:1</option></select></div>
   <h3>🎨 설정</h3>
   <div class="row">상대 이름 <input id="name" size="8"> 내 이름 표시 <input type="checkbox" id="showMe"></div>
   <div class="row">배경 <input type="color" id="bg"> 내 말풍선 <input type="color" id="me"> 글자 <input type="color" id="meT"></div>
@@ -114,6 +117,15 @@ $("f").onchange=e=>{const r=new FileReader();r.onload=()=>{C={...D,...JSON.parse
 function init(){theme();bind();list();save()}
 try{const h=location.hash;if(h.startsWith("#v=")){C={...D,...dec(h.slice(3))};document.body.classList.add("view")}
 else{const s=localStorage.getItem("chat");if(s)C={...D,...JSON.parse(s)}}}catch(e){}
+async function expPng(){
+const btn=$("pbtn");btn.disabled=true;stopP();tok++;
+try{btn.textContent="생성중...";
+if(!window.html2canvas)await new Promise((ok,no)=>{const e=document.createElement("script");e.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+document.body.classList.add("png");showAll();await new Promise(r=>setTimeout(r,100));
+const cv=await html2canvas($("phone"),{scale:+$("gsc").value,backgroundColor:null,logging:false});
+await new Promise(r=>cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="chat.png";a.click();r()},"image/png"))
+}catch(e){alert("PNG 생성 실패: "+e.message)}
+document.body.classList.remove("png");btn.disabled=false;btn.textContent="🖼 PNG 저장"}
 async function expGif(){
 const btn=$("gbtn");btn.disabled=true;stopP();const my=++tok;
 try{btn.textContent="준비중...";
